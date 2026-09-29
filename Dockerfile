@@ -39,7 +39,5 @@ ENV NODE_ENV=production
 
 EXPOSE 8080
 
-VOLUME ["/data"]
-
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "src/server.js"]
