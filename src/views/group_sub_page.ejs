@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: group.name + ' | X-ui-ali' }) %></head>
+<body>
+<div class="sub-page">
+  <div class="sub-hero">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="content">
+      <div class="avatar">📦</div>
+      <h1><%= group.name %></h1>
+      <p class="muted" style="margin-top:10px;"><%= members.length %> عضو در این گروه اشتراک</p>
+
+      <div class="applink-row">
+        <a class="applink" href="v2rayng://install-sub?url=<%= encodeURIComponent(subUrl) %>">📲 v2rayNG</a>
+        <a class="applink" href="sn://subscription?url=<%= encodeURIComponent(subUrl) %>&name=<%= encodeURIComponent(group.name) %>">📱 NekoBox</a>
+        <a class="applink" href="hiddify://import/<%= encodeURIComponent(subUrl) %>">🟢 Hiddify</a>
+        <a class="applink" href="streisand://import/<%= encodeURIComponent(subUrl) %>">🍏 Streisand</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="mb0">🔗 لینک اشتراک گروهی (Subscription)</h2>
+    <p class="muted">این لینک، کانفیگ‌های تمام اعضای گروه را یکجا شامل می‌شود.</p>
+    <div class="link-row">
+      <code id="subUrl"><%= subUrl %></code>
+      <button class="btn small secondary" onclick="copyText('subUrl')">کپی</button>
+    </div>
+    <div style="text-align:center; margin-top: 16px;">
+      <img src="<%= subQr %>" alt="QR subscription" style="border-radius:14px; background:#fff; padding:12px; max-width:200px;">
+    </div>
+  </div>
+
+  <% members.forEach(function(m) { %>
+  <h2 style="margin: 26px 4px 14px;">👤 <%= m.username %></h2>
+  <div class="grid cols-2">
+    <% links.filter(l => l.username === m.username).forEach(function(l, i) { %>
+    <div class="qr-card proto-<%= l.key %>">
+      <img src="<%= l.qr %>" alt="QR <%= l.protocol %>">
+      <div class="proto-tag"><span class="proto-dot"></span><%= l.protocol %></div>
+      <div class="link-row">
+        <code id="l-<%= m.id %>-<%= i %>" style="font-size:10px;"><%= l.link %></code>
+      </div>
+      <button class="btn small secondary" onclick="copyText('l-<%= m.id %>-<%= i %>')">کپی لینک</button>
+    </div>
+    <% }) %>
+  </div>
+  <% }) %>
+
+  <p class="footer-note">⚠️ این صفحه را فقط با اعضای همین گروه به اشتراک بگذارید.<br>ساخته‌شده با X-ui-ali</p>
+</div>
+<%- include('partials/toast') %>
+<script>
+function copyText(id) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(() => showToast('کپی شد ✅'));
+}
+</script>
+</body>
+</html>

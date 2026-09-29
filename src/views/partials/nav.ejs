@@ -1,0 +1,25 @@
+<div class="topbar">
+  <div class="brand"><span class="logo">X</span> X-ui-ali</div>
+  <div class="nav">
+    <a href="/" class="<%= active === 'dashboard' ? 'active' : '' %>"><span class="nav-ic">▤</span> داشبورد</a>
+    <a href="/users" class="<%= active === 'users' ? 'active' : '' %>"><span class="nav-ic">👤</span> کاربران</a>
+    <a href="/groups" class="<%= active === 'groups' ? 'active' : '' %>"><span class="nav-ic">📦</span> گروه‌ها</a>
+    <a href="/activity" class="<%= active === 'activity' ? 'active' : '' %>"><span class="nav-ic">⏱️</span> فعالیت‌ها</a>
+    <% if (typeof admin !== 'undefined' && admin && admin.role === 'owner') { %>
+    <a href="/admins" class="<%= active === 'admins' ? 'active' : '' %>"><span class="nav-ic">🛡️</span> ادمین‌ها</a>
+    <% } %>
+    <a href="/settings" class="<%= active === 'settings' ? 'active' : '' %>"><span class="nav-ic">⚙️</span> تنظیمات</a>
+  </div>
+  <div class="nav-right">
+    <% if (typeof admin !== 'undefined' && admin) { %>
+    <span class="who">
+      <span class="avatar-sm"><%= admin.u.charAt(0).toUpperCase() %></span>
+      <%= admin.u %>
+      <span class="role-badge <%= admin.role %>"><%= admin.role === 'owner' ? 'مالک' : 'ادمین' %></span>
+    </span>
+    <% } %>
+    <form action="/logout" method="POST" style="display:inline">
+      <button class="btn secondary small" type="submit">خروج</button>
+    </form>
+  </div>
+</div>

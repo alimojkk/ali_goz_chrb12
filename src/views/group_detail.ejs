@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: group.name + ' - X-ui-ali' }) %></head>
+<body>
+<%- include('partials/sidebar', { active: 'groups', admin: admin }) %>
+<div class="container">
+  <p><a href="/groups">&rarr; بازگشت به گروه‌ها</a></p>
+  <h1>📦 <%= group.name %></h1>
+
+  <div class="card">
+    <h2>لینک اشتراک گروهی</h2>
+    <p class="muted">این لینک، کانفیگ‌های تمام اعضای این گروه را یکجا در اختیار کلاینت می‌گذارد.</p>
+    <div class="link-row">
+      <code id="subUrl"><%= subUrl %></code>
+      <button class="btn small secondary" onclick="copyText('subUrl')">کپی</button>
+    </div>
+    <p><a href="<%= subPageUrl %>" target="_blank">🔗 مشاهده صفحه گرافیکی اشتراک گروهی (QR + همه کانفیگ‌ها)</a></p>
+  </div>
+
+  <div class="card">
+    <h2>ویرایش گروه</h2>
+    <div id="editMsg"></div>
+    <form id="editGroupForm">
+      <label>نام گروه</label>
+      <input name="name" value="<%= group.name %>" required>
+      <label>اعضا</label>
+      <div class="pick-list">
+        <% members.forEach(function(u) { %>
+        <label class="pick-item"><input type="checkbox" name="userIds" value="<%= u.id %>" checked> <%= u.username %></label>
+        <% }) %>
+        <% others.forEach(function(u) { %>
+        <label class="pick-item"><input type="checkbox" name="userIds" value="<%= u.id %>"> <%= u.username %></label>
+        <% }) %>
+        <% if (!members.length && !others.length) { %><p class="muted" style="padding:10px;">کاربری موجود نیست.</p><% } %>
+      </div>
+      <div class="gap8" style="margin-top:14px;">
+        <button class="btn" type="submit">ذخیره تغییرات</button>
+        <button class="btn danger" type="button" onclick="deleteGroup()">حذف گروه</button>
+      </div>
+    </form>
+  </div>
+</div>
+</main>
+</div>
+<%- include('partials/toast') %>
+<script>
+function copyText(id) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(() => showToast('کپی شد ✅'));
+}
+document.getElementById('editGroupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const userIds = Array.from(f.querySelectorAll('input[name="userIds"]:checked')).map(i => i.value);
+  const res = await fetch('/api/groups/<%= group.id %>', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: f.name.value, userIds }) });
+  const data = await res.json();
+  if (!res.ok) { document.getElementById('editMsg').innerHTML = '<div class="error-box">' + data.error + '</div>'; return; }
+  window.location.reload();
+});
+async function deleteGroup() {
+  if (!confirm('آیا از حذف این گروه مطمئن هستید؟ (کاربران عضو حذف نمی‌شوند)')) return;
+  await fetch('/api/groups/<%= group.id %>', { method: 'DELETE' });
+  window.location.href = '/groups';
+}
+</script>
+</body>
+</html>

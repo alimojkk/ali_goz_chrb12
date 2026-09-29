@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: 'مدیریت ادمین‌ها - X-ui-ali' }) %></head>
+<body>
+<%- include('partials/sidebar', { active: 'admins', admin: admin }) %>
+<div class="container">
+  <h1>🛡️ مدیریت ادمین‌ها</h1>
+  <p class="muted">مالک پنل می‌تواند ادمین‌های دیگری برای مدیریت مشترک اضافه یا حذف کند. ادمین‌ها به همه بخش‌ها به‌جز مدیریت ادمین‌ها و پشتیبان‌گیری دسترسی دارند.</p>
+
+  <div class="card">
+    <h2>افزودن ادمین جدید</h2>
+    <div id="createMsg"></div>
+    <form id="createAdminForm">
+      <div class="row">
+        <div><label>نام کاربری</label><input name="username" pattern="[a-zA-Z0-9_-]{3,32}" required></div>
+        <div><label>رمز عبور</label><input name="password" type="password" minlength="6" required></div>
+      </div>
+      <button class="btn" type="submit" style="margin-top:14px;">افزودن ادمین</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>لیست ادمین‌ها</h2>
+    <table>
+      <thead><tr><th>نام کاربری</th><th>نقش</th><th>تاریخ ایجاد</th><th>عملیات</th></tr></thead>
+      <tbody>
+        <% admins.forEach(function(a) { %>
+        <tr>
+          <td><%= a.username %></td>
+          <td><span class="role-badge <%= a.role %>"><%= a.role === 'owner' ? 'مالک' : 'ادمین' %></span></td>
+          <td><%= new Date(a.createdAt).toLocaleDateString('fa-IR') %></td>
+          <td>
+            <% if (a.role !== 'owner' && a.id !== me.id) { %>
+            <button class="btn small danger" onclick="deleteAdmin('<%= a.id %>','<%= a.username %>')">حذف</button>
+            <% } else { %>
+            <span class="muted" style="font-size:12px;">—</span>
+            <% } %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+</main>
+</div>
+<%- include('partials/toast') %>
+<script>
+document.getElementById('createAdminForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const res = await fetch('/api/admins', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: f.username.value, password: f.password.value }) });
+  const data = await res.json();
+  if (!res.ok) { document.getElementById('createMsg').innerHTML = '<div class="error-box">' + data.error + '</div>'; return; }
+  window.location.reload();
+});
+async function deleteAdmin(id, name) {
+  if (!confirm('آیا از حذف ادمین «' + name + '» مطمئن هستید؟')) return;
+  const res = await fetch('/api/admins/' + id, { method: 'DELETE' });
+  const data = await res.json();
+  if (!res.ok) { alert(data.error); return; }
+  window.location.reload();
+}
+</script>
+</body>
+</html>

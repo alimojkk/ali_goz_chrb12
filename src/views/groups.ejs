@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: 'گروه‌های اشتراک - X-ui-ali' }) %></head>
+<body>
+<%- include('partials/sidebar', { active: 'groups', admin: admin }) %>
+<div class="container">
+  <div class="flex-between">
+    <h1>گروه‌های اشتراک <span class="muted" style="font-size:14px; font-weight:400;">(<%= groups.length %>)</span></h1>
+    <button class="btn" onclick="var f=document.getElementById('newGroupForm'); f.style.display=(f.style.display==='none'?'block':'none');">+ گروه جدید</button>
+  </div>
+  <p class="muted">با گروه‌بندی چند کاربر در یک لینک اشتراک، می‌توانید مثلاً کانفیگ چند سرور/دستگاه یک مشتری را در یک ساب واحد ارائه دهید.</p>
+
+  <div class="card" id="newGroupForm" style="display:none;">
+    <h2>ساخت گروه جدید</h2>
+    <div id="createGroupError"></div>
+    <form id="createGroupForm">
+      <label>نام گروه</label>
+      <input name="name" placeholder="مثلاً: پکیج خانواده" required>
+      <label>انتخاب اعضا</label>
+      <div class="pick-list">
+        <% users.forEach(function(u) { %>
+        <label class="pick-item"><input type="checkbox" name="userIds" value="<%= u.id %>"> <%= u.username %></label>
+        <% }) %>
+        <% if (!users.length) { %><p class="muted" style="padding:10px;">ابتدا حداقل یک کاربر بسازید.</p><% } %>
+      </div>
+      <button class="btn" type="submit" style="margin-top:14px;">ساخت گروه</button>
+    </form>
+  </div>
+
+  <div class="grid cols-3">
+    <% groups.forEach(function(g) { %>
+    <div class="card">
+      <h2 class="mb0">📦 <%= g.name %></h2>
+      <p class="muted"><%= g.userIds.length %> عضو</p>
+      <a class="btn small secondary" href="/groups/<%= g.id %>">مدیریت گروه</a>
+    </div>
+    <% }) %>
+  </div>
+  <% if (!groups.length) { %>
+  <div class="empty-state"><div class="ic">📦</div>هنوز گروهی ساخته نشده است.</div>
+  <% } %>
+</div>
+</main>
+</div>
+<%- include('partials/toast') %>
+<script>
+document.getElementById('createGroupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const userIds = Array.from(f.querySelectorAll('input[name="userIds"]:checked')).map(i => i.value);
+  const res = await fetch('/api/groups', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: f.name.value, userIds }) });
+  const data = await res.json();
+  if (!res.ok) { document.getElementById('createGroupError').innerHTML = '<div class="error-box">' + data.error + '</div>'; return; }
+  window.location.href = '/groups/' + data.id;
+});
+</script>
+</body>
+</html>

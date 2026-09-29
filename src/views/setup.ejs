@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: 'راه‌اندازی اولیه - X-ui-ali' }) %></head>
+<body>
+  <div class="auth-wrap">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="auth-card">
+      <div class="auth-logo">X</div>
+      <h1>راه‌اندازی X-ui-ali</h1>
+      <p class="muted">این اولین اجرای پنل است. یک حساب مدیر بسازید تا شروع کنید.</p>
+      <% if (error) { %><div class="error-box"><%= error %></div><% } %>
+      <form method="POST" action="/setup">
+        <label>نام کاربری ادمین</label>
+        <input name="username" required minlength="3" maxlength="32" placeholder="ali" autofocus>
+        <label>رمز عبور</label>
+        <input name="password" type="password" required minlength="6" placeholder="حداقل ۶ کاراکتر">
+        <label>تکرار رمز عبور</label>
+        <input name="confirm" type="password" required minlength="6">
+        <button class="btn" type="submit" style="width:100%; margin-top:20px;">ساخت حساب مدیر و ورود</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

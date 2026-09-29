@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: 'فعالیت‌ها - X-ui-ali' }) %></head>
+<body>
+<%- include('partials/sidebar', { active: 'activity', admin: admin }) %>
+<div class="container">
+  <h1>⏱️ گزارش فعالیت‌ها</h1>
+  <p class="muted">آخرین ۱۵۰ رویداد ثبت‌شده در پنل (ورود، ساخت/ویرایش/حذف کاربر و گروه، تغییر تنظیمات و...).</p>
+
+  <div class="card">
+    <% if (items.length) { %>
+    <div class="timeline">
+      <% items.forEach(function(a) { %>
+      <div class="tl-item">
+        <div class="tl-ic"><%= activityIcon(a.action) %></div>
+        <div class="tl-body">
+          <div class="tl-title"><%= a.detail %></div>
+          <div class="tl-meta"><%= a.actor %> · <%= new Date(a.ts).toLocaleString('fa-IR') %></div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } else { %>
+    <div class="empty-state"><div class="ic">🌙</div>هنوز فعالیتی ثبت نشده است.</div>
+    <% } %>
+  </div>
+</div>
+</main>
+</div>
+<%- include('partials/toast') %>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: user.username + ' - X-ui-ali' }) %></head>
+<body>
+<%- include('partials/sidebar', { active: 'users', admin: admin }) %>
+<div class="container">
+  <p><a href="/users">&rarr; بازگشت به لیست کاربران</a></p>
+  <div class="flex-between">
+    <h1><%= user.username %> <span class="badge <%= isActive ? 'on' : 'off' %>"><%= isActive ? 'فعال' : 'غیرفعال' %></span></h1>
+  </div>
+
+  <% if (myGroups.length) { %>
+  <p class="muted">عضو گروه‌ها:
+    <% myGroups.forEach(function(g) { %>
+      <a href="/groups/<%= g.id %>" class="chip" style="display:inline-block; margin-inline-end:6px;"><%= g.name %></a>
+    <% }) %>
+  </p>
+  <% } %>
+
+  <div class="card">
+    <h2>لینک اشتراک (Subscription) — گزینه پیشنهادی</h2>
+    <p class="muted">این یک لینک است که همهٔ پروتکل‌های فعال کاربر را شامل می‌شود؛ در کلاینت به عنوان Subscription اضافه کنید تا به‌روزرسانی خودکار داشته باشد.</p>
+    <div class="link-row">
+      <code id="subUrl"><%= subUrl %></code>
+      <button class="btn small secondary" onclick="copyText('subUrl')">کپی</button>
+    </div>
+    <p><a href="<%= subPageUrl %>" target="_blank">🔗 مشاهده صفحه گرافیکی اشتراک (QR + همه کانفیگ‌ها)</a></p>
+  </div>
+
+  <div class="card">
+    <h2>کانفیگ‌های تکی</h2>
+    <div class="grid cols-3">
+      <% userLinks.forEach(function(l, i) { %>
+      <div class="qr-card proto-<%= l.key %>">
+        <img src="<%= l.qr %>" alt="QR <%= l.protocol %>">
+        <div class="proto-tag"><span class="proto-dot"></span><%= l.protocol %></div>
+        <div class="link-row">
+          <code id="link-<%= i %>" style="font-size:10px;"><%= l.link %></code>
+        </div>
+        <button class="btn small secondary" onclick="copyText('link-<%= i %>')">کپی لینک</button>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>ویرایش کاربر</h2>
+    <div id="editError"></div>
+    <p class="muted">نام کاربری دقیقاً همان ریمارکی است که در کانفیگ‌ها و صفحه ساب نمایش داده می‌شود.</p>
+    <form id="editForm">
+      <label>نام کاربری (ریمارک)</label>
+      <input name="username" value="<%= user.username %>" pattern="[a-zA-Z0-9_-]{3,32}" required>
+      <div class="row">
+        <div>
+          <label>سقف ترافیک (گیگابایت، ۰=نامحدود)</label>
+          <input name="trafficLimitGB" type="number" min="0" step="0.5" value="<%= user.trafficLimitGB || 0 %>">
+        </div>
+        <div>
+          <label>آیدی عددی تلگرام</label>
+          <input name="telegramId" value="<%= user.telegramId || '' %>" placeholder="123456789">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>استراتژی انقضا</label>
+          <select name="expireStrategy" onchange="toggleExpireFields(this)">
+            <option value="fixed" <%= user.expireStrategy !== 'first_use' ? 'selected' : '' %>>تاریخ ثابت</option>
+            <option value="first_use" <%= user.expireStrategy === 'first_use' ? 'selected' : '' %>>شروع از اولین اتصال کاربر</option>
+          </select>
+        </div>
+        <div id="fixedExpireWrap" style="<%= user.expireStrategy === 'first_use' ? 'display:none;' : '' %>">
+          <label>تاریخ انقضا</label>
+          <input name="expiresAt" type="date" value="<%= user.expiresAt ? user.expiresAt.substring(0,10) : '' %>">
+        </div>
+        <div id="firstUseExpireWrap" style="<%= user.expireStrategy === 'first_use' ? '' : 'display:none;' %>">
+          <label>تعداد روز اعتبار پس از اولین اتصال</label>
+          <input name="expireDays" type="number" min="1" value="<%= user.expireDays || 30 %>">
+          <% if (user.firstConnectedAt) { %>
+          <p class="muted" style="font-size:11px;">اولین اتصال: <%= new Date(user.firstConnectedAt).toLocaleString('fa-IR') %></p>
+          <% } else { %>
+          <p class="muted" style="font-size:11px;">هنوز متصل نشده — شمارش روز پس از اولین استفاده آغاز می‌شود.</p>
+          <% } %>
+        </div>
+      </div>
+      <label>یادداشت</label>
+      <input name="note" value="<%= user.note || '' %>">
+      <label>پروتکل‌های فعال</label>
+      <div class="gap8">
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="p_vless" style="width:auto" <%= (!user.protocols || user.protocols.vless) ? 'checked' : '' %>> VLESS</label>
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="p_vmess" style="width:auto" <%= (!user.protocols || user.protocols.vmess) ? 'checked' : '' %>> VMess</label>
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="p_trojan" style="width:auto" <%= (!user.protocols || user.protocols.trojan) ? 'checked' : '' %>> Trojan</label>
+      </div>
+      <div class="gap8" style="margin-top:18px;">
+        <button class="btn" type="submit">ذخیره تغییرات</button>
+        <button class="btn secondary" type="button" onclick="resetTraffic()">صفر کردن مصرف</button>
+        <button class="btn secondary" type="button" onclick="regenerate()">ساخت مجدد UUID / لینک ساب</button>
+        <button class="btn danger" type="button" onclick="deleteUser()">حذف کاربر</button>
+      </div>
+    </form>
+  </div>
+</div>
+</main>
+</div>
+<%- include('partials/toast') %>
+<script>
+function copyText(id) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(() => showToast('کپی شد ✅'));
+}
+function toggleExpireFields(sel) {
+  document.getElementById('fixedExpireWrap').style.display = sel.value === 'fixed' ? 'block' : 'none';
+  document.getElementById('firstUseExpireWrap').style.display = sel.value === 'first_use' ? 'block' : 'none';
+}
+
+document.getElementById('editForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const body = {
+    username: f.username.value,
+    trafficLimitGB: f.trafficLimitGB.value,
+    telegramId: f.telegramId.value,
+    expireStrategy: f.expireStrategy.value,
+    expiresAt: f.expiresAt.value,
+    expireDays: f.expireDays.value,
+    note: f.note.value,
+    protocols: { vless: f.p_vless.checked, vmess: f.p_vmess.checked, trojan: f.p_trojan.checked }
+  };
+  const res = await fetch('/api/users/<%= user.id %>', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById('editError').innerHTML = '<div class="error-box">' + data.error + '</div>';
+    return;
+  }
+  window.location.reload();
+});
+
+async function resetTraffic() {
+  await fetch('/api/users/<%= user.id %>/reset-traffic', { method: 'POST' });
+  window.location.reload();
+}
+async function regenerate() {
+  if (!confirm('لینک‌های قبلی این کاربر دیگر کار نخواهند کرد. ادامه می‌دهید؟')) return;
+  await fetch('/api/users/<%= user.id %>/regenerate', { method: 'POST' });
+  window.location.reload();
+}
+async function deleteUser() {
+  if (!confirm('آیا از حذف این کاربر مطمئن هستید؟')) return;
+  await fetch('/api/users/<%= user.id %>', { method: 'DELETE' });
+  window.location.href = '/users';
+}
+</script>
+</body>
+</html>

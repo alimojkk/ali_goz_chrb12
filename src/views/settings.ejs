@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: 'تنظیمات - X-ui-ali' }) %></head>
+<body>
+<%- include('partials/sidebar', { active: 'settings', admin: admin }) %>
+<div class="container">
+  <h1>تنظیمات</h1>
+
+  <div class="card">
+    <h2>دامنه عمومی</h2>
+    <p class="muted">در حالت عادی به‌صورت خودکار از متغیر RAILWAY_PUBLIC_DOMAIN خوانده می‌شود (<code><%= domain %></code>). فقط در صورت استفاده از دامنه اختصاصی آن را اینجا وارد کنید.</p>
+    <div id="domainMsg"></div>
+    <form id="domainForm">
+      <label>دامنه سفارشی (اختیاری)</label>
+      <input name="domain" value="<%= settings.domain || '' %>" placeholder="example.com">
+      <button class="btn" type="submit" style="margin-top:14px;">ذخیره دامنه</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>مسیرهای WebSocket</h2>
+    <p class="muted">این مسیرها به‌صورت تصادفی ساخته شده‌اند و نیازی به تغییر ندارند؛ فقط در صورت نیاز به سفارشی‌سازی ویرایش کنید.</p>
+    <div id="pathsMsg"></div>
+    <form id="pathsForm">
+      <div class="row">
+        <div><label>مسیر VLESS</label><input name="p_vless" value="<%= settings.paths.vless %>"></div>
+        <div><label>مسیر VMess</label><input name="p_vmess" value="<%= settings.paths.vmess %>"></div>
+        <div><label>مسیر Trojan</label><input name="p_trojan" value="<%= settings.paths.trojan %>"></div>
+      </div>
+      <button class="btn" type="submit" style="margin-top:14px;">ذخیره مسیرها</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>پروتکل‌های فعال (سراسری)</h2>
+    <p class="muted">غیرفعال‌کردن یک پروتکل، آن را کاملاً از هستهٔ Xray حذف می‌کند (برای همهٔ کاربران)، بدون نیاز به تغییر لینک‌های ساب.</p>
+    <div id="protoMsg"></div>
+    <form id="protoForm">
+      <div class="gap8">
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="pr_vless" style="width:auto" <%= settings.protocolsEnabled.vless !== false ? 'checked' : '' %>> VLESS</label>
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="pr_vmess" style="width:auto" <%= settings.protocolsEnabled.vmess !== false ? 'checked' : '' %>> VMess</label>
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="pr_trojan" style="width:auto" <%= settings.protocolsEnabled.trojan !== false ? 'checked' : '' %>> Trojan</label>
+      </div>
+      <button class="btn" type="submit" style="margin-top:14px;">ذخیره پروتکل‌ها</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>تغییر رمز عبور من</h2>
+    <div id="passMsg"></div>
+    <form id="passForm">
+      <label>رمز عبور فعلی</label>
+      <input name="currentPassword" type="password" required>
+      <label>رمز عبور جدید</label>
+      <input name="newPassword" type="password" required minlength="6">
+      <button class="btn" type="submit" style="margin-top:14px;">تغییر رمز عبور</button>
+    </form>
+  </div>
+
+  <% if (isOwner) { %>
+  <div class="card">
+    <h2>پشتیبان‌گیری و بازیابی</h2>
+    <p class="muted">یک فایل JSON شامل تمام کاربران، گروه‌ها، ادمین‌ها و تنظیمات دانلود کنید یا از یک فایل قبلی بازیابی نمایید. این عملیات فقط در اختیار مالک پنل است.</p>
+    <div class="gap8">
+      <a class="btn secondary" href="/api/backup">⬇️ دانلود بکاپ کامل</a>
+      <button class="btn secondary" type="button" onclick="document.getElementById('restoreFile').click()">⬆️ بازیابی از فایل بکاپ</button>
+      <input type="file" id="restoreFile" accept="application/json" style="display:none">
+    </div>
+    <div id="restoreMsg" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>مدیریت ادمین‌ها</h2>
+    <p class="muted">افزودن یا حذف ادمین‌های دیگر برای مدیریت مشترک پنل.</p>
+    <a class="btn secondary" href="/admins">🛡️ رفتن به صفحه مدیریت ادمین‌ها</a>
+  </div>
+  <% } %>
+
+  <div class="card">
+    <h2>وضعیت هسته Xray</h2>
+    <p>وضعیت: <span class="badge <%= status.running ? 'on' : 'off' %>"><%= status.running ? 'در حال اجرا' : 'متوقف' %></span></p>
+    <p class="muted">فایل اجرایی: <%= status.binExists ? 'موجود ✅' : 'یافت نشد ❌' %> — مسیر داده: <code><%= '/data' %></code></p>
+    <details>
+      <summary style="cursor:pointer; color: var(--muted); font-size:13px;">نمایش لاگ‌های اخیر</summary>
+      <pre style="white-space:pre-wrap; font-size:11px; background:rgba(255,255,255,0.04); padding:10px; border-radius:10px; max-height:240px; overflow:auto; border:1px solid var(--border);"><%= status.logs.join('\n') %></pre>
+    </details>
+    <button class="btn secondary" style="margin-top:10px;" onclick="fetch('/api/status/restart',{method:'POST'}).then(()=>window.location.reload())">ری‌استارت Xray</button>
+  </div>
+</div>
+</main>
+</div>
+<script>
+function bindForm(formId, msgId, mapFn) {
+  document.getElementById(formId).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = mapFn(e.target);
+    const res = await fetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await res.json();
+    const box = document.getElementById(msgId);
+    if (!res.ok) { box.innerHTML = '<div class="error-box">' + data.error + '</div>'; return; }
+    box.innerHTML = '<div class="info-box">با موفقیت ذخیره شد.</div>';
+    setTimeout(() => window.location.reload(), 800);
+  });
+}
+bindForm('domainForm', 'domainMsg', (f) => ({ domain: f.domain.value }));
+bindForm('pathsForm', 'pathsMsg', (f) => ({ paths: { vless: f.p_vless.value, vmess: f.p_vmess.value, trojan: f.p_trojan.value } }));
+bindForm('protoForm', 'protoMsg', (f) => ({ protocolsEnabled: { vless: f.pr_vless.checked, vmess: f.pr_vmess.checked, trojan: f.pr_trojan.checked } }));
+bindForm('passForm', 'passMsg', (f) => ({ currentPassword: f.currentPassword.value, newPassword: f.newPassword.value }));
+
+const restoreInput = document.getElementById('restoreFile');
+if (restoreInput) {
+  restoreInput.addEventListener('change', async () => {
+    const file = restoreInput.files[0];
+    if (!file) return;
+    if (!confirm('بازیابی، اطلاعات فعلی پنل را بازنویسی می‌کند. ادامه می‌دهید؟')) return;
+    const text = await file.text();
+    let json;
+    try { json = JSON.parse(text); } catch (e) {
+      document.getElementById('restoreMsg').innerHTML = '<div class="error-box">فایل JSON نامعتبر است.</div>';
+      return;
+    }
+    const res = await fetch('/api/backup/restore', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(json) });
+    const data = await res.json();
+    const box = document.getElementById('restoreMsg');
+    if (!res.ok) { box.innerHTML = '<div class="error-box">' + data.error + '</div>'; return; }
+    box.innerHTML = '<div class="info-box">بازیابی با موفقیت انجام شد. صفحه در حال بارگذاری مجدد...</div>';
+    setTimeout(() => window.location.reload(), 1200);
+  });
+}
+</script>
+</body>
+</html>

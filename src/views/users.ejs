@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: 'کاربران - X-ui-ali' }) %></head>
+<body>
+<%- include('partials/sidebar', { active: 'users', admin: admin }) %>
+<div class="container">
+  <div class="flex-between">
+    <h1>کاربران <span class="muted" style="font-size:14px; font-weight:400;">(<%= users.length %>)</span></h1>
+    <div class="gap8">
+      <button class="btn secondary" onclick="quickCreate()">⚡ کاربر سریع</button>
+      <button class="btn" onclick="var f=document.getElementById('newUserForm'); f.style.display = (f.style.display==='none'?'block':'none');">+ کاربر جدید</button>
+    </div>
+  </div>
+
+  <div class="card" id="newUserForm" style="display:none;">
+    <h2>ساخت کاربر جدید</h2>
+    <p class="muted">نام کاربری که اینجا وارد می‌کنید عیناً همان ریمارک (نام نمایشی) کانفیگ‌های این کاربر خواهد بود.</p>
+    <div id="createError"></div>
+    <form id="createForm">
+      <div class="row">
+        <div>
+          <label>نام کاربری (انگلیسی)</label>
+          <input name="username" placeholder="user1" required pattern="[a-zA-Z0-9_-]{3,32}">
+        </div>
+        <div>
+          <label>سقف ترافیک (گیگابایت، ۰ = نامحدود)</label>
+          <input name="trafficLimitGB" type="number" min="0" step="0.5" value="0">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>استراتژی انقضا</label>
+          <select name="expireStrategy" onchange="toggleExpireFields(this)">
+            <option value="fixed">تاریخ ثابت</option>
+            <option value="first_use">شروع از اولین اتصال کاربر</option>
+          </select>
+        </div>
+        <div id="fixedExpireWrap">
+          <label>تاریخ انقضا (اختیاری)</label>
+          <input name="expiresAt" type="date">
+        </div>
+        <div id="firstUseExpireWrap" style="display:none;">
+          <label>تعداد روز اعتبار پس از اولین اتصال</label>
+          <input name="expireDays" type="number" min="1" value="30">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>یادداشت (اختیاری)</label>
+          <input name="note" placeholder="مثلاً: مشتری تلگرام">
+        </div>
+        <div>
+          <label>آیدی عددی تلگرام (اختیاری)</label>
+          <input name="telegramId" placeholder="123456789">
+        </div>
+      </div>
+      <label>پروتکل‌های فعال</label>
+      <div class="gap8">
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="p_vless" style="width:auto" checked> VLESS</label>
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="p_vmess" style="width:auto" checked> VMess</label>
+        <label style="display:flex; align-items:center; gap:6px;"><input type="checkbox" name="p_trojan" style="width:auto" checked> Trojan</label>
+      </div>
+      <button class="btn" type="submit" style="margin-top:16px;">ساخت کاربر</button>
+    </form>
+  </div>
+
+  <div class="chip-row">
+    <div class="chip active" data-filter="all" onclick="setFilter('all', this)">همه</div>
+    <div class="chip" data-filter="active" onclick="setFilter('active', this)">فعال</div>
+    <div class="chip" data-filter="inactive" onclick="setFilter('inactive', this)">غیرفعال</div>
+  </div>
+  <input id="searchBox" placeholder="🔎 جستجوی نام کاربری..." style="margin-bottom:14px;" oninput="applyFilters()">
+
+  <div class="card">
+    <table id="usersTable">
+      <thead>
+        <tr><th>کاربر</th><th>پروتکل‌ها</th><th>وضعیت</th><th>مصرف</th><th>انقضا</th><th>عملیات</th></tr>
+      </thead>
+      <tbody>
+        <% users.forEach(function(u) { %>
+        <tr class="user-row" data-status="<%= isActive(u) ? 'active' : 'inactive' %>" data-name="<%= u.username.toLowerCase() %>">
+          <td>
+            <a href="/users/<%= u.id %>" class="table-user" style="text-decoration:none; color:inherit;">
+              <div class="table-avatar"><%= u.username.charAt(0).toUpperCase() %></div>
+              <div>
+                <div style="font-weight:700;"><%= u.username %></div>
+                <% if (u.note) { %><div class="muted" style="font-size:11px;"><%= u.note %></div><% } %>
+              </div>
+            </a>
+          </td>
+          <td>
+            <div class="proto-mini">
+              <% if (!u.protocols || u.protocols.vless) { %><span style="background:#a78bfa;" title="VLESS"></span><% } %>
+              <% if (!u.protocols || u.protocols.vmess) { %><span style="background:#22d3ee;" title="VMess"></span><% } %>
+              <% if (!u.protocols || u.protocols.trojan) { %><span style="background:#f472b6;" title="Trojan"></span><% } %>
+            </div>
+          </td>
+          <td><span class="badge <%= isActive(u) ? 'on' : 'off' %>"><%= isActive(u) ? 'فعال' : 'غیرفعال' %></span></td>
+          <td><bdi dir="ltr"><%= ((u.trafficUsedBytes||0)/1073741824).toFixed(2) %> / <%= u.trafficLimitGB ? u.trafficLimitGB + ' GB' : '∞' %></bdi></td>
+          <td><%= u.expiresAt ? new Date(u.expiresAt).toLocaleDateString('fa-IR') : (u.expireStrategy === 'first_use' ? 'پس از اولین اتصال' : '-') %></td>
+          <td class="gap8">
+            <a class="btn small secondary" href="/users/<%= u.id %>">جزئیات</a>
+            <button class="btn small secondary" onclick="toggleUser('<%= u.id %>')">فعال/غیرفعال</button>
+            <button class="btn small danger" onclick="deleteUser('<%= u.id %>','<%= u.username %>')">حذف</button>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% if (!users.length) { %>
+    <div class="empty-state"><div class="ic">👤</div>هنوز کاربری ساخته نشده است. از دکمه «+ کاربر جدید» شروع کنید.</div>
+    <% } %>
+    <div id="noResults" class="empty-state" style="display:none;"><div class="ic">🔍</div>نتیجه‌ای پیدا نشد.</div>
+  </div>
+</div>
+</main>
+</div>
+<%- include('partials/toast') %>
+<script>
+function toggleExpireFields(sel) {
+  document.getElementById('fixedExpireWrap').style.display = sel.value === 'fixed' ? 'block' : 'none';
+  document.getElementById('firstUseExpireWrap').style.display = sel.value === 'first_use' ? 'block' : 'none';
+}
+
+document.getElementById('createForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const body = {
+    username: f.username.value,
+    trafficLimitGB: f.trafficLimitGB.value,
+    expireStrategy: f.expireStrategy.value,
+    expiresAt: f.expiresAt.value,
+    expireDays: f.expireDays.value,
+    note: f.note.value,
+    telegramId: f.telegramId.value,
+    protocols: { vless: f.p_vless.checked, vmess: f.p_vmess.checked, trojan: f.p_trojan.checked }
+  };
+  const res = await fetch('/api/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById('createError').innerHTML = '<div class="error-box">' + data.error + '</div>';
+    return;
+  }
+  window.location.href = '/users/' + data.id;
+});
+
+async function quickCreate() {
+  const res = await fetch('/api/users/quick', { method: 'POST' });
+  const data = await res.json();
+  if (res.ok) window.location.href = '/users/' + data.id;
+}
+
+async function toggleUser(id) {
+  await fetch('/api/users/' + id + '/toggle', { method: 'POST' });
+  showToast('وضعیت کاربر تغییر کرد.');
+  setTimeout(() => window.location.reload(), 500);
+}
+async function deleteUser(id, name) {
+  if (!confirm('آیا از حذف کاربر «' + name + '» مطمئن هستید؟')) return;
+  await fetch('/api/users/' + id, { method: 'DELETE' });
+  window.location.reload();
+}
+
+let currentFilter = 'all';
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  applyFilters();
+}
+function applyFilters() {
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  let visible = 0;
+  document.querySelectorAll('.user-row').forEach(row => {
+    const matchesStatus = currentFilter === 'all' || row.dataset.status === currentFilter;
+    const matchesSearch = !q || row.dataset.name.includes(q);
+    const show = matchesStatus && matchesSearch;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('noResults').style.display = visible === 0 ? 'block' : 'none';
+}
+</script>
+</body>
+</html>

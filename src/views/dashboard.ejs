@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head><%- include('partials/head', { title: 'داشبورد - X-ui-ali' }) %></head>
+<body>
+<%- include('partials/sidebar', { active: 'dashboard', admin: admin }) %>
+<div class="container">
+  <h1>خوش آمدید، <%= admin.u %> 👋</h1>
+  <p class="muted">دامنه فعال: <code><%= domain %></code></p>
+
+  <div class="quick-row" style="margin:18px 0;">
+    <div class="quick-tile" onclick="quickCreate()">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+      <div class="lbl">ساخت کاربر سریع</div>
+    </div>
+    <a class="quick-tile" href="/users" style="text-decoration:none; color:inherit;">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div class="lbl">مدیریت کاربران</div>
+    </a>
+    <a class="quick-tile" href="/groups" style="text-decoration:none; color:inherit;">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+      <div class="lbl">گروه‌های اشتراک</div>
+    </a>
+    <div class="quick-tile" onclick="restartXray()">
+      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>
+      <div class="lbl">ری‌استارت Xray</div>
+    </div>
+  </div>
+
+  <div class="grid cols-3">
+    <div class="card stat">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div class="num"><%= totalUsers %></div>
+      <div class="label">تعداد کل کاربران</div>
+    </div>
+    <div class="card stat">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+      <div class="num"><%= activeUsers %></div>
+      <div class="label">کاربران فعال</div>
+    </div>
+    <div class="card stat">
+      <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div class="num"><bdi dir="ltr"><%= totalTrafficGB %> GB</bdi></div>
+      <div class="label">مجموع مصرف</div>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="8" rx="2"/><rect x="2" y="13" width="20" height="8" rx="2"/><line x1="6" y1="7" x2="6.01" y2="7"/><line x1="6" y1="17" x2="6.01" y2="17"/></svg> وضعیت زنده سرور</h2>
+      <div id="sysStats">
+        <div class="gauge-wrap" style="margin-bottom:16px;">
+          <div class="gauge" id="gaugeCpu" style="--pct:<%= sys.cpuLoadPercent %>; --gauge-color: var(--cyan);"><span><%= sys.cpuLoadPercent %>%</span></div>
+          <div class="gauge-label"><b>پردازنده (CPU)</b>میانگین بار روی <%= sys.cpuCount %> هسته</div>
+        </div>
+        <div class="gauge-wrap" style="margin-bottom:16px;">
+          <div class="gauge" id="gaugeRam" style="--pct:<%= sys.memUsedPercent %>; --gauge-color: var(--violet);"><span><%= sys.memUsedPercent %>%</span></div>
+          <div class="gauge-label"><b>حافظه (RAM)</b><bdi dir="ltr"><%= sysFmt.formatBytes(sys.memUsed) %></bdi> از <bdi dir="ltr"><%= sysFmt.formatBytes(sys.memTotal) %></bdi></div>
+        </div>
+        <% if (sys.disk) { %>
+        <div class="gauge-wrap">
+          <div class="gauge" id="gaugeDisk" style="--pct:<%= sys.disk.usedPercent %>; --gauge-color: var(--pink);"><span><%= sys.disk.usedPercent %>%</span></div>
+          <div class="gauge-label"><b>فضای دیسک</b><bdi dir="ltr"><%= sysFmt.formatBytes(sys.disk.used) %></bdi> از <bdi dir="ltr"><%= sysFmt.formatBytes(sys.disk.total) %></bdi></div>
+        </div>
+        <% } %>
+        <p class="muted" style="margin-top:14px;">مدت روشن بودن سرویس: <%= sysFmt.formatUptime(sys.uptime) %></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> مصرف ترافیک ۱۴ روز اخیر</h2>
+      <% if (chart.length) {
+           const maxGb = Math.max(0.01, ...chart.map(c => c.gb));
+      %>
+      <div class="chart-wrap">
+        <% chart.forEach(function(c) { %>
+        <div class="chart-bar" style="height: <%= Math.max(3, Math.round((c.gb/maxGb)*100)) %>%;">
+          <span class="tip"><bdi dir="ltr"><%= c.date.slice(5) %>: <%= c.gb %> GB</bdi></span>
+        </div>
+        <% }) %>
+      </div>
+      <% } else { %>
+      <div class="chart-empty">هنوز ترافیکی ثبت نشده است.</div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex-between">
+      <h2 class="mb0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg> وضعیت هسته Xray</h2>
+      <span class="badge <%= status.running ? 'on' : 'off' %>"><%= status.running ? 'در حال اجرا' : 'متوقف' %></span>
+    </div>
+    <p class="muted">فایل اجرایی: <%= status.binExists ? 'نصب شده ✅' : 'پیدا نشد ❌' %></p>
+    <% if (status.lastError) { %><div class="error-box"><%= status.lastError %></div><% } %>
+  </div>
+
+  <div class="card">
+    <div class="flex-between">
+      <h2 class="mb0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> آخرین فعالیت‌ها</h2>
+      <a href="/activity" class="muted">مشاهده همه ←</a>
+    </div>
+    <% if (recentActivity.length) { %>
+    <div class="timeline">
+      <% recentActivity.forEach(function(a) { %>
+      <div class="tl-item">
+        <div class="tl-ic"><%= activityIcon(a.action) %></div>
+        <div class="tl-body">
+          <div class="tl-title"><%= a.detail %></div>
+          <div class="tl-meta"><%= a.actor %> · <%= new Date(a.ts).toLocaleString('fa-IR') %></div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } else { %>
+    <div class="empty-state"><div class="ic">🌙</div>هنوز فعالیتی ثبت نشده است.</div>
+    <% } %>
+  </div>
+</div>
+</main>
+</div>
+<%- include('partials/toast') %>
+<script>
+function restartXray() {
+  fetch('/api/status/restart', { method: 'POST' }).then(() => showToast('دستور ری‌استارت ارسال شد.'));
+}
+async function quickCreate() {
+  const res = await fetch('/api/users/quick', { method: 'POST' });
+  const data = await res.json();
+  if (res.ok) window.location.href = '/users/' + data.id;
+}
+
+// آپدیت زنده گیج‌های سیستم هر ۵ ثانیه
+function setGauge(el, pct) { if (el) el.style.setProperty('--pct', pct); }
+setInterval(async () => {
+  try {
+    const res = await fetch('/api/system-stats');
+    const s = await res.json();
+    const cpu = document.getElementById('gaugeCpu');
+    const ram = document.getElementById('gaugeRam');
+    const disk = document.getElementById('gaugeDisk');
+    if (cpu) { setGauge(cpu, s.cpuLoadPercent); cpu.querySelector('span').textContent = s.cpuLoadPercent + '%'; }
+    if (ram) { setGauge(ram, s.memUsedPercent); ram.querySelector('span').textContent = s.memUsedPercent + '%'; }
+    if (disk && s.disk) { setGauge(disk, s.disk.usedPercent); disk.querySelector('span').textContent = s.disk.usedPercent + '%'; }
+  } catch (e) {}
+}, 5000);
+</script>
+</body>
+</html>
